@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
@@ -353,6 +354,112 @@ function getPayloadConfigFromPayload(
     : config[key as keyof typeof config]
 }
 
+// Add the AreaChart component
+const AreaChart = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentProps<typeof ChartContainer> & {
+    data: any[];
+    index: string;
+    categories: string[];
+    colors?: string[];
+    valueFormatter?: (value: number) => string;
+  }
+>(({ data, index, categories, colors, valueFormatter, ...props }, ref) => {
+  return (
+    <ChartContainer ref={ref} {...props}>
+      <RechartsPrimitive.ComposedChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <RechartsPrimitive.XAxis 
+          dataKey={index} 
+          tickLine={false}
+          axisLine={false}
+          padding={{ left: 10, right: 10 }}
+        />
+        <RechartsPrimitive.YAxis 
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={valueFormatter}
+        />
+        <RechartsPrimitive.Tooltip 
+          content={
+            <ChartTooltipContent
+              formatter={(value: any) => 
+                valueFormatter ? [valueFormatter(value), ""] : [value, ""]
+              }
+            />
+          }
+        />
+        <RechartsPrimitive.Legend 
+          content={<ChartLegendContent />}
+        />
+        {categories.map((category, i) => (
+          <RechartsPrimitive.Area
+            key={category}
+            type="monotone"
+            dataKey={category}
+            fill={`var(--color-${category}, ${colors?.[i % colors.length] || "currentColor"})`}
+            stroke={`var(--color-${category}, ${colors?.[i % colors.length] || "currentColor"})`}
+            fillOpacity={0.2}
+            strokeWidth={2}
+          />
+        ))}
+      </RechartsPrimitive.ComposedChart>
+    </ChartContainer>
+  );
+});
+AreaChart.displayName = "AreaChart";
+
+// Add the BarChart component
+const BarChart = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentProps<typeof ChartContainer> & {
+    data: any[];
+    index: string;
+    categories: string[];
+    colors?: string[];
+    valueFormatter?: (value: number) => string;
+  }
+>(({ data, index, categories, colors, valueFormatter, ...props }, ref) => {
+  return (
+    <ChartContainer ref={ref} {...props}>
+      <RechartsPrimitive.BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <RechartsPrimitive.XAxis 
+          dataKey={index} 
+          tickLine={false}
+          axisLine={false}
+          padding={{ left: 10, right: 10 }}
+        />
+        <RechartsPrimitive.YAxis 
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={valueFormatter}
+        />
+        <RechartsPrimitive.Tooltip
+          content={
+            <ChartTooltipContent
+              formatter={(value: any) => 
+                valueFormatter ? [valueFormatter(value), ""] : [value, ""]
+              }
+            />
+          }
+        />
+        <RechartsPrimitive.Legend content={<ChartLegendContent />} />
+        {categories.map((category, i) => (
+          <RechartsPrimitive.Bar
+            key={category}
+            dataKey={category}
+            fill={`var(--color-${category}, ${colors?.[i % colors.length] || "currentColor"})`}
+            radius={[4, 4, 0, 0]}
+            barSize={20}
+          />
+        ))}
+      </RechartsPrimitive.BarChart>
+    </ChartContainer>
+  );
+});
+BarChart.displayName = "BarChart";
+
 export {
   ChartContainer,
   ChartTooltip,
@@ -360,4 +467,6 @@ export {
   ChartLegend,
   ChartLegendContent,
   ChartStyle,
+  AreaChart,
+  BarChart
 }
