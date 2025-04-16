@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
@@ -37,9 +36,7 @@ const ChartContainer = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
     config: ChartConfig
-    children: React.ComponentProps<
-      typeof RechartsPrimitive.ResponsiveContainer
-    >["children"]
+    children: React.ReactNode
   }
 >(({ id, className, children, config, ...props }, ref) => {
   const uniqueId = React.useId()
@@ -315,7 +312,6 @@ const ChartLegendContent = React.forwardRef<
 )
 ChartLegendContent.displayName = "ChartLegend"
 
-// Helper to extract item config from a payload.
 function getPayloadConfigFromPayload(
   config: ChartConfig,
   payload: unknown,
@@ -354,7 +350,6 @@ function getPayloadConfigFromPayload(
     : config[key as keyof typeof config]
 }
 
-// Add the AreaChart component
 const AreaChart = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<typeof ChartContainer> & {
@@ -409,7 +404,6 @@ const AreaChart = React.forwardRef<
 });
 AreaChart.displayName = "AreaChart";
 
-// Add the BarChart component
 const BarChart = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<typeof ChartContainer> & {
