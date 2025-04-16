@@ -1,5 +1,5 @@
 
-import { TimeEntry, TimeBank } from "../types/time";
+import { TimeEntry, TimeBank, TimeBankStats } from "../types/time";
 
 // Format minutes to hours and minutes (e.g. 90 -> "1h 30m")
 export const formatMinutes = (minutes: number): string => {
@@ -68,4 +68,95 @@ export const formatTime = (date: Date): string => {
     hour: '2-digit',
     minute: '2-digit'
   }).format(date);
+};
+
+// Format a date as dd/mm/yyyy
+export const formatDateShort = (date: Date): string => {
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  }).format(date);
+};
+
+// Calculate statistics for user timebank
+export const calculateStats = (timeBank: TimeBank): TimeBankStats => {
+  const { entries, overtimeBalance, absenceBalance, netBalance } = timeBank;
+
+  // Convert to hours for stats
+  const totalOvertimeHours = overtimeBalance / 60;
+  const totalAbsenceHours = absenceBalance / 60;
+  const netBalanceHours = netBalance / 60;
+
+  // Get unique days with activity
+  const activeDays = new Set(
+    entries.map(entry => 
+      new Date(entry.startTime).toISOString().split('T')[0]
+    )
+  ).size;
+
+  // Calculate longest streak
+  const sortedDates = entries
+    .map(entry => new Date(entry.startTime).toISOString().split('T')[0])
+    .sort();
+  
+  let currentStreak = 1;
+  let longestStreak = 1;
+  
+  for (let i = 1; i < sortedDates.length; i++) {
+    const prevDate = new Date(sortedDates[i-1]);
+    const currDate = new Date(sortedDates[i]);
+    
+    // If it's the next day, continue the streak
+    if (currDate.getTime() - prevDate.getTime() === 86400000) {
+      currentStreak++;
+      if (currentStreak > longestStreak) {
+        longestStreak = currentStreak;
+      }
+    } else if (currDate.getTime() !== prevDate.getTime()) {
+      // Different day but not consecutive
+      currentStreak = 1;
+    }
+  }
+
+  // Calculate average overtime per active day (if there are active days)
+  const averageOvertimePerDay = activeDays > 0 ? totalOvertimeHours / activeDays : 0;
+
+  return {
+    totalOvertimeHours,
+    totalAbsenceHours,
+    netBalanceHours,
+    activeDays,
+    longestStreak,
+    averageOvertimePerDay
+  };
+};
+
+// Generate a monthly report text
+export const generateReportText = (
+  userName: string,
+  entries: TimeEntry[],
+  netBalance: number
+): string => {
+  const lines = [userName];
+  
+  // Sort entries by date
+  const sortedEntries = [...entries].sort((a, b) => 
+    a.startTime.getTime() - b.startTime.getTime()
+  );
+  
+  // Add entry lines
+  sortedEntries.forEach(entry => {
+    const date = formatDateShort(entry.startTime);
+    const startTime = formatTime(entry.startTime);
+    const endTime = entry.endTime ? formatTime(entry.endTime) : 'ongoing';
+    const balance = entry.type === 'overtime' ? `+${formatMinutes(entry.duration)}` : `-${formatMinutes(entry.duration)}`;
+    
+    lines.push(`${date} - ${startTime} to ${endTime} ~ ${balance}`);
+  });
+  
+  // Add total
+  lines.push(`Total: ${netBalance >= 0 ? '+' : ''}${formatMinutes(netBalance)}`);
+  
+  return lines.join('\n');
 };
